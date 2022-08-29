@@ -1,2 +1,2 @@
 # Kaggle
-Use for Saving Kaggle ipynb :)
+Repo for Saving Kaggle ipynb :)
