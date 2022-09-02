@@ -32,3 +32,27 @@
 2022-09-02 21:47:05,366 INFO    Thread-16 :13812 [dir_watcher.py:_on_file_created():275] file/dir created: e:\Code\Kaggle\wandb\run-20220902_214655-2n5kps4m\files\wandb-metadata.json
 2022-09-02 21:47:06,073 DEBUG   SenderThread:13812 [sender.py:send():302] send: telemetry
 2022-09-02 21:47:07,903 INFO    Thread-22 :13812 [upload_job.py:push():138] Uploaded file C:\Users\24871\AppData\Local\Temp\tmp_m88vj5rwandb\2ja2idht-wandb-metadata.json
+2022-09-02 21:47:21,089 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:47:21,089 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:47:27,589 INFO    Thread-16 :13812 [dir_watcher.py:_on_file_modified():292] file/dir modified: e:\Code\Kaggle\wandb\run-20220902_214655-2n5kps4m\files\config.yaml
+2022-09-02 21:47:31,118 DEBUG   SenderThread:13812 [sender.py:send():302] send: stats
+2022-09-02 21:47:37,169 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:47:37,170 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:47:53,080 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:47:53,080 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:48:04,457 DEBUG   SenderThread:13812 [sender.py:send():302] send: stats
+2022-09-02 21:48:09,154 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:48:09,155 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:48:25,308 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:48:25,309 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:48:38,036 DEBUG   SenderThread:13812 [sender.py:send():302] send: stats
+2022-09-02 21:48:41,422 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:48:41,423 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:48:57,605 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:48:57,605 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:49:11,696 DEBUG   SenderThread:13812 [sender.py:send():302] send: stats
+2022-09-02 21:49:17,621 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:49:17,622 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:49:33,692 DEBUG   HandlerThread:13812 [handler.py:handle_request():141] handle_request: stop_status
+2022-09-02 21:49:33,692 DEBUG   SenderThread:13812 [sender.py:send_request():316] send_request: stop_status
+2022-09-02 21:49:45,309 DEBUG   SenderThread:13812 [sender.py:send():302] send: stats
