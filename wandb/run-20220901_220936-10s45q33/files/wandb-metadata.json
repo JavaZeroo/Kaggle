@@ -1,0 +1,24 @@
+{
+    "os": "Windows-10-10.0.22000-SP0",
+    "python": "3.10.4",
+    "heartbeatAt": "2022-09-01T14:09:40.781624",
+    "startedAt": "2022-09-01T14:09:36.658885",
+    "docker": null,
+    "gpu": "NVIDIA GeForce RTX 2060",
+    "gpu_count": 1,
+    "cpu_count": 12,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "E:\\Code\\Kaggle\\test.py",
+    "codePath": "test.py",
+    "git": {
+        "remote": "https://github.com/JavaZeroo/Kaggle.git",
+        "commit": "c45d671a339365c462e24fe3fd51d80753a3e476"
+    },
+    "email": "2487163254@qq.com",
+    "root": "E:/Code/Kaggle",
+    "host": "Jimmy",
+    "username": "2487",
+    "executable": "D:\\Anaconda3\\envs\\bigchuang\\python.exe"
+}
