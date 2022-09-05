@@ -1,2 +1,0 @@
-
-wandb: WARNING Calling wandb.run.save without any arguments is deprecated.Changes to attributes are automatically persisted.
