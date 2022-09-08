@@ -1,6 +1,3 @@
-import dicom2nifti
+import re
 
-dicom2nifti.dicom_series_to_nifti(
-    r"E:\Code\Kaggle\RSNA_data\train_images\1.2.826.0.1.3680043.14", 
-    r"E:\Code\Kaggle\11.nii.gz", 
-    reorient_nifti=True)
+print(re.findall(r'RSNA_data/test_images/(.*)/(.*).dcm', r'RSNA_data/test_images/1.2.826.0.1.3680043.22327/1.dcm'))
