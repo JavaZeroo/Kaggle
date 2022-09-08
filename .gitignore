@@ -8,3 +8,4 @@ test.nii.gz
 segmentations.rar
 segmentations1/
 wandb/
+train_predictions.csv
