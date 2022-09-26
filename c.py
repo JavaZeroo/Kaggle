@@ -157,18 +157,6 @@ def load_dicom(path):
     return cv2.cvtColor(data, cv2.COLOR_GRAY2RGB), img
 
 
-im, meta = load_dicom(
-    f'{TRAIN_IMAGES_PATH}/1.2.826.0.1.3680043.10001/1.dcm')
-plt.figure()
-plt.imshow(im)
-plt.title('regular image')
-
-im, meta = load_dicom(
-    f'{TRAIN_IMAGES_PATH}/1.2.826.0.1.3680043.10001/1.dcm')
-plt.figure()
-plt.imshow(im)
-plt.title('jpeg')
-
 class EffnetDataSet(torch.utils.data.Dataset):
     def __init__(self, df, path, transforms=None):
         super().__init__()
