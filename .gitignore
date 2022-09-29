@@ -10,3 +10,4 @@ segmentations1/
 wandb/
 testmodel.tph
 log/
+train_predictions.csv

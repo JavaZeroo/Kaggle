@@ -25,13 +25,13 @@ pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 1000)
 
 # Effnet
-WEIGHTS = tv.models.efficientnet.EfficientNet_V2_M_Weights.DEFAULT
+WEIGHTS = tv.models.efficientnet.EfficientNet_V2_L_Weights.DEFAULT
 RSNA_2022_PATH = '../input/rsna-2022-cervical-spine-fracture-detection'
 TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
 TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
 EFFNET_MAX_TRAIN_BATCHES = 4000
 EFFNET_MAX_EVAL_BATCHES = 200
-ONE_CYCLE_MAX_LR = 0.0001
+ONE_CYCLE_MAX_LR = 0.00005
 ONE_CYCLE_PCT_START = 0.3
 SAVE_CHECKPOINT_EVERY_STEP = 1000
 EFFNET_CHECKPOINTS_PATH = '../input/rsna-2022-base-effnetv2'
@@ -233,7 +233,7 @@ writer = SummaryWriter(log_dir='./log', comment='effnet')
 class EffnetModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        effnet = tv.models.efficientnet_v2_m(weights=WEIGHTS)
+        effnet = tv.models.efficientnet_v2_l(weights=WEIGHTS)
         self.model = create_feature_extractor(effnet, ['flatten'])
         with writer:
             writer.add_graph(effnet, (Variable(torch.rand(32, 3, 384, 384)),))
@@ -317,38 +317,6 @@ def weighted_loss(y_pred_logit, y, reduction='mean', verbose=False):
         return torch.mean(loss)
     return loss
 
-# Quick test of  patient_overall + C1-C7 loss
-# weighted_loss(
-#     torch.logit(torch.tensor([
-#         [0.1, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-#         [0.1, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-#     ])).to(DEVICE),
-#     torch.tensor([
-#         [1., 1., 0., 0., 0., 0., 0., 0.],
-#         [0., 0, 0., 0., 0., 0., 0., 0.]
-#     ]).to(DEVICE),
-#     reduction=None,
-#     verbose=True
-# )
-
-# Quick test of C1-C7 loss
-weighted_loss(
-    torch.logit(torch.tensor([
-        [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-        [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-    ])).to(DEVICE),
-    torch.tensor([
-        [1., 0., 0., 0., 0., 0., 0.],
-        [0, 0., 0., 0., 0., 0., 0.]
-    ]).to(DEVICE),
-    reduction=None,
-    verbose=True
-)
-
-
-# <div class="alert alert-block alert-success" style="font-size:25px">
-#     🦴 5.2 Train: training/evaluation loop 🦴
-# </div>
 
 def filter_nones(b):
     return torch.utils.data.default_collate([v for v in b if v is not None])
@@ -361,15 +329,6 @@ def load_model(model, name, path='.'):
     model.load_state_dict(data)
     return model
 
-
-# quick test
-# model = torch.nn.Linear(2, 1)
-# save_model('testmodel', model)
-
-# model1 = load_model(torch.nn.Linear(2, 1), 'testmodel')
-# assert torch.all(
-#     next(iter(model1.parameters())) == next(iter(model.parameters()))
-# ).item(), "Loading/saving is inconsistent!"
 
 def evaluate_effnet(model: EffnetModel, ds, max_batches=PREDICT_MAX_BATCHES, shuffle=False):
     torch.manual_seed(42)
@@ -397,10 +356,7 @@ def evaluate_effnet(model: EffnetModel, ds, max_batches=PREDICT_MAX_BATCHES, shu
                     break
         return np.mean(frac_losses), np.mean(vert_losses), torch.concat(pred_frac).cpu().numpy(), torch.concat(pred_vert).cpu().numpy()
 
-# quick test
-# m = EffnetModel()
-# frac_loss, vert_loss, pred1, pred2 = evaluate_effnet(m, ds_train, max_batches=2)
-# frac_loss, vert_loss, pred1.shape, pred2.shape
+
 
 def gc_collect():
     gc.collect()
@@ -420,7 +376,7 @@ def train_effnet(ds_train, ds_eval, logger, name):
 
     model = EffnetModel().to(DEVICE)
     optim = torch.optim.Adam(model.parameters())
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=ONE_CYCLE_MAX_LR, epochs=1,
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=ONE_CYCLE_MAX_LR, epochs=5,
                                                     steps_per_epoch=min(EFFNET_MAX_TRAIN_BATCHES, len(dl_train)),
                                                     pct_start=ONE_CYCLE_PCT_START)
     print(5)
@@ -470,8 +426,6 @@ def train_effnet(ds_train, ds_eval, logger, name):
     save_model(name, model)
     return model
 
-import logging
-# logger = logging.getLogger("log.log")
 
 # N-fold models. Can be used to estimate accurate CV score and in ensembled submissions.
 effnet_models = []
