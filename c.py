@@ -25,7 +25,11 @@ pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 1000)
 
 # Effnet
+<<<<<<< HEAD
 WEIGHTS = tv.models.efficientnet.EfficientNet_V2_L_Weights.DEFAULT
+=======
+WEIGHTS = tv.models.efficientnet.EfficientNet_V2_S_Weights.DEFAULT
+>>>>>>> 41e975ffb34158c4f9e930566113b41ccdaaafee
 RSNA_2022_PATH = '../input/rsna-2022-cervical-spine-fracture-detection'
 TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
 TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
@@ -55,7 +59,8 @@ if os.environ["WANDB_MODE"] == "online":
 
 if not IS_KAGGLE:
     print('Running locally')
-    RSNA_2022_PATH = f'/root/autodl-tmp/RSNA_data'
+    RSNA_2022_PATH = f'/mnt/e/Code/Kaggle/RSNA_data'
+    # RSNA_2022_PATH = f'/root/autodl-tmp/RSNA_data'
     TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
     TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
     METADATA_PATH = f'{RSNA_2022_PATH}/Metadata'
@@ -104,7 +109,7 @@ df_train.sample(2)
 split = GroupKFold(N_FOLDS)
 for k, (_, test_idx) in enumerate(split.split(df_train, groups=df_train.StudyInstanceUID)):
     df_train.loc[test_idx, 'split'] = k
-df_train.sample(2)
+print(df_train.sample(2))
 
 
 # ### Test data
@@ -122,8 +127,6 @@ if df_test.iloc[0].row_id == '1.2.826.0.1.3680043.10197_C1':
         "prediction_type": ["C1", "C1", "patient_overall"]}
     )
 
-df_test
-
 test_slices = glob.glob(f'{TEST_IMAGES_PATH}/*/*')
 print(test_slices[0])
 print(f'{TEST_IMAGES_PATH}/(.*)/(.*).dcm')
@@ -135,12 +138,6 @@ df_test_slices.sample(2)
 df_test = df_test.set_index('StudyInstanceUID').join(df_test_slices.set_index('StudyInstanceUID')).reset_index()
 df_test.sample(2)
 
-
-# <div class="alert alert-block alert-success" style="font-size:25px">
-#     🦴 3. Dataset class 🦴
-# </div>
-# 
-# `EffnetDataSet` class returns images of individual slices. It uses a dataframe parameter `df` as a source of slices metadata to locate and load images from `path` folder. It accepts transforms parameter which we set to `WEIGHTS.transforms()`. This is a set of transforms used to pre-train the model on ImageNet dataset.
 
 def load_dicom(path):
     """
@@ -198,7 +195,6 @@ print(X.shape, y_frac.shape, y_vert.shape)
 def plot_sample_patient(df, ds):
     patient = np.random.choice(df.query('patient_overall > 0').StudyInstanceUID)
     df = df.query('StudyInstanceUID == @patient')
-    display(df)
 
     frac = np.stack([ds[i][1] for i in df.index])
     vert = np.stack([ds[i][2] for i in df.index])
@@ -233,7 +229,11 @@ writer = SummaryWriter(log_dir='./log', comment='effnet')
 class EffnetModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
+<<<<<<< HEAD
         effnet = tv.models.efficientnet_v2_l(weights=WEIGHTS)
+=======
+        effnet = tv.models.efficientnet_v2_s(weights=WEIGHTS)
+>>>>>>> 41e975ffb34158c4f9e930566113b41ccdaaafee
         self.model = create_feature_extractor(effnet, ['flatten'])
         with writer:
             writer.add_graph(effnet, (Variable(torch.rand(32, 3, 384, 384)),))

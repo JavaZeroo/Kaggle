@@ -155,15 +155,9 @@ class EffnetDataSet(torch.utils.data.Dataset):
         try:
             img = load_dicom(path)[0]
             img = np.transpose(img, (2, 0, 1))
-            print(img.shape)
-            # img = np.array([img[0]])
             if self.transforms is not None:
                 img = self.transforms(torch.as_tensor(img))
-            input_transform = transforms.Compose([
-                transforms.Grayscale(1), #这一句就是转为单通道灰度图像
-            ])
-            img = input_transform(img)
-            print(img.shape)
+
         except Exception as ex:
             print(ex)
             return None
