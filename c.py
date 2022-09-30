@@ -31,7 +31,7 @@ TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
 TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
 EFFNET_MAX_TRAIN_BATCHES = 4000
 EFFNET_MAX_EVAL_BATCHES = 200
-ONE_CYCLE_MAX_LR = 0.000
+ONE_CYCLE_MAX_LR = 0.0001
 ONE_CYCLE_PCT_START = 0.3
 SAVE_CHECKPOINT_EVERY_STEP = 1000
 EFFNET_CHECKPOINTS_PATH = '../input/rsna-2022-base-effnetv2'
@@ -422,11 +422,6 @@ def train_effnet(ds_train, ds_eval, logger, name):
                         'lr': scheduler.get_last_lr()[0]})
     save_model(name, model)
     return model
-
-<<<<<<< HEAD
-# logger = logging.getLogger("log.log")
-=======
->>>>>>> c777c94c949b8aa07aed22f7eb07ec8f4cfb0882
 
 # N-fold models. Can be used to estimate accurate CV score and in ensembled submissions.
 effnet_models = []
