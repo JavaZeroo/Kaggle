@@ -25,7 +25,7 @@ pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 1000)
 
 # Effnet
-WEIGHTS = tv.models.efficientnet.EfficientNet_V2_L_Weights.DEFAULT
+WEIGHTS = tv.models.efficientnet.EfficientNet_V2_M_Weights.DEFAULT
 RSNA_2022_PATH = '../input/rsna-2022-cervical-spine-fracture-detection'
 TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
 TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
@@ -233,15 +233,17 @@ writer = SummaryWriter(log_dir='./log', comment='effnet')
 class EffnetModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        effnet = tv.models.efficientnet_v2_l(weights=WEIGHTS)
+        effnet = tv.models.efficientnet_v2_m(weights=WEIGHTS)
         self.model = create_feature_extractor(effnet, ['flatten'])
         with writer:
             writer.add_graph(effnet, (Variable(torch.rand(32, 3, 384, 384)),))
 
         self.nn_fracture = torch.nn.Sequential(
+            torch.nn.Dropout(0.3), 
             torch.nn.Linear(1280, 7),
         )
         self.nn_vertebrae = torch.nn.Sequential(
+            torch.nn.Dropout(0.3), 
             torch.nn.Linear(1280, 7),
         )
 
