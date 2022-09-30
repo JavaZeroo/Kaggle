@@ -25,7 +25,7 @@ pd.set_option('display.max_rows', 100)
 pd.set_option('display.max_columns', 1000)
 
 # Effnet
-WEIGHTS = tv.models.efficientnet.EfficientNet_V2_S_Weights.DEFAULT
+WEIGHTS = tv.models.efficientnet.EfficientNet_V2_M_Weights.DEFAULT
 RSNA_2022_PATH = '../input/rsna-2022-cervical-spine-fracture-detection'
 TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
 TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
@@ -225,17 +225,25 @@ writer = SummaryWriter(log_dir='./log', comment='effnet')
 class EffnetModel(torch.nn.Module):
     def __init__(self):
         super().__init__()
-        effnet = tv.models.efficientnet_v2_s(weights=WEIGHTS)
+        effnet = tv.models.efficientnet_v2_m(weights=WEIGHTS)
         self.model = create_feature_extractor(effnet, ['flatten'])
-        with writer:
-            writer.add_graph(effnet, (Variable(torch.rand(32, 3, 384, 384)),))
+        print(self.model)
+        # with writer:
+        #     writer.add_graph(effnet, (Variable(torch.rand(32, 3, 384, 384)),))
 
+        # 骨折的概率
         self.nn_fracture = torch.nn.Sequential(
+            torch.nn.Dropout(0.3), 
             torch.nn.Linear(1280, 7),
-        )
+        ) # C1,C2, C3, C4, C5, C6, C7
+          # 0 , 1, 0 , 0 , 0 , 0 , 0
+
+        # 这是什么骨头 的概率
         self.nn_vertebrae = torch.nn.Sequential(
+            torch.nn.Dropout(0.3), 
             torch.nn.Linear(1280, 7),
-        )
+        ) # C1,C2, C3, C4, C5, C6, C7
+          # 0 , 1, 0 , 0.8, 0 , 0 , 0
 
     def forward(self, x):
         # returns logits
@@ -247,8 +255,8 @@ class EffnetModel(torch.nn.Module):
         return torch.sigmoid(frac), torch.sigmoid(vert)
 
 model = EffnetModel()
-with writer:
-    writer.add_graph(model, (Variable(torch.rand(1, 3, 384, 384)),))
+# with writer:
+#     writer.add_graph(model, (Variable(torch.rand(1, 3, 384, 384)),))
 # model.predict(torch.randn(1, 3, 512, 512))
 del model
 
@@ -401,8 +409,6 @@ def gc_collect():
 
 print(os.cpu_count())
 
-# %%wandb
-# inline wandb diagrams!
 
 def train_effnet(ds_train, ds_eval, logger, name):
     torch.manual_seed(42)
@@ -462,7 +468,6 @@ def train_effnet(ds_train, ds_eval, logger, name):
     save_model(name, model)
     return model
 
-import logging
 # logger = logging.getLogger("log.log")
 
 # N-fold models. Can be used to estimate accurate CV score and in ensembled submissions.
