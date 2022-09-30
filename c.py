@@ -31,7 +31,7 @@ TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
 TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
 EFFNET_MAX_TRAIN_BATCHES = 4000
 EFFNET_MAX_EVAL_BATCHES = 200
-ONE_CYCLE_MAX_LR = 0.0001
+ONE_CYCLE_MAX_LR = 0.000
 ONE_CYCLE_PCT_START = 0.3
 SAVE_CHECKPOINT_EVERY_STEP = 1000
 EFFNET_CHECKPOINTS_PATH = '../input/rsna-2022-base-effnetv2'
@@ -55,8 +55,7 @@ if os.environ["WANDB_MODE"] == "online":
 
 if not IS_KAGGLE:
     print('Running locally')
-    RSNA_2022_PATH = f'/mnt/e/Code/Kaggle/RSNA_data'
-    # RSNA_2022_PATH = f'/root/autodl-tmp/RSNA_data'
+    RSNA_2022_PATH = f'/root/autodl-tmp/RSNA_data'
     TRAIN_IMAGES_PATH = f'{RSNA_2022_PATH}/train_images'
     TEST_IMAGES_PATH = f'{RSNA_2022_PATH}/test_images'
     METADATA_PATH = f'{RSNA_2022_PATH}/Metadata'
@@ -96,7 +95,7 @@ df_train.sample(2)
 split = GroupKFold(N_FOLDS)
 for k, (_, test_idx) in enumerate(split.split(df_train, groups=df_train.StudyInstanceUID)):
     df_train.loc[test_idx, 'split'] = k
-print(df_train.sample(2))
+df_train.sample(2)
 
 
 # ### Test data
@@ -114,6 +113,8 @@ if df_test.iloc[0].row_id == '1.2.826.0.1.3680043.10197_C1':
         "prediction_type": ["C1", "C1", "patient_overall"]}
     )
 
+df_test
+
 test_slices = glob.glob(f'{TEST_IMAGES_PATH}/*/*')
 print(test_slices[0])
 print(f'{TEST_IMAGES_PATH}/(.*)/(.*).dcm')
@@ -125,6 +126,12 @@ df_test_slices.sample(2)
 df_test = df_test.set_index('StudyInstanceUID').join(df_test_slices.set_index('StudyInstanceUID')).reset_index()
 df_test.sample(2)
 
+
+# <div class="alert alert-block alert-success" style="font-size:25px">
+#     🦴 3. Dataset class 🦴
+# </div>
+# 
+# `EffnetDataSet` class returns images of individual slices. It uses a dataframe parameter `df` as a source of slices metadata to locate and load images from `path` folder. It accepts transforms parameter which we set to `WEIGHTS.transforms()`. This is a set of transforms used to pre-train the model on ImageNet dataset.
 
 def load_dicom(path):
     """
@@ -182,6 +189,7 @@ print(X.shape, y_frac.shape, y_vert.shape)
 def plot_sample_patient(df, ds):
     patient = np.random.choice(df.query('patient_overall > 0').StudyInstanceUID)
     df = df.query('StudyInstanceUID == @patient')
+    display(df)
 
     frac = np.stack([ds[i][1] for i in df.index])
     vert = np.stack([ds[i][2] for i in df.index])
@@ -308,38 +316,6 @@ def weighted_loss(y_pred_logit, y, reduction='mean', verbose=False):
         return torch.mean(loss)
     return loss
 
-# Quick test of  patient_overall + C1-C7 loss
-# weighted_loss(
-#     torch.logit(torch.tensor([
-#         [0.1, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-#         [0.1, 0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-#     ])).to(DEVICE),
-#     torch.tensor([
-#         [1., 1., 0., 0., 0., 0., 0., 0.],
-#         [0., 0, 0., 0., 0., 0., 0., 0.]
-#     ]).to(DEVICE),
-#     reduction=None,
-#     verbose=True
-# )
-
-# Quick test of C1-C7 loss
-weighted_loss(
-    torch.logit(torch.tensor([
-        [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1],
-        [0.9, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1]
-    ])).to(DEVICE),
-    torch.tensor([
-        [1., 0., 0., 0., 0., 0., 0.],
-        [0, 0., 0., 0., 0., 0., 0.]
-    ]).to(DEVICE),
-    reduction=None,
-    verbose=True
-)
-
-
-# <div class="alert alert-block alert-success" style="font-size:25px">
-#     🦴 5.2 Train: training/evaluation loop 🦴
-# </div>
 
 def filter_nones(b):
     return torch.utils.data.default_collate([v for v in b if v is not None])
@@ -352,15 +328,6 @@ def load_model(model, name, path='.'):
     model.load_state_dict(data)
     return model
 
-
-# quick test
-# model = torch.nn.Linear(2, 1)
-# save_model('testmodel', model)
-
-# model1 = load_model(torch.nn.Linear(2, 1), 'testmodel')
-# assert torch.all(
-#     next(iter(model1.parameters())) == next(iter(model.parameters()))
-# ).item(), "Loading/saving is inconsistent!"
 
 def evaluate_effnet(model: EffnetModel, ds, max_batches=PREDICT_MAX_BATCHES, shuffle=False):
     torch.manual_seed(42)
@@ -388,10 +355,7 @@ def evaluate_effnet(model: EffnetModel, ds, max_batches=PREDICT_MAX_BATCHES, shu
                     break
         return np.mean(frac_losses), np.mean(vert_losses), torch.concat(pred_frac).cpu().numpy(), torch.concat(pred_vert).cpu().numpy()
 
-# quick test
-# m = EffnetModel()
-# frac_loss, vert_loss, pred1, pred2 = evaluate_effnet(m, ds_train, max_batches=2)
-# frac_loss, vert_loss, pred1.shape, pred2.shape
+
 
 def gc_collect():
     gc.collect()
@@ -409,7 +373,7 @@ def train_effnet(ds_train, ds_eval, logger, name):
 
     model = EffnetModel().to(DEVICE)
     optim = torch.optim.Adam(model.parameters())
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=ONE_CYCLE_MAX_LR, epochs=1,
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=ONE_CYCLE_MAX_LR, epochs=5,
                                                     steps_per_epoch=min(EFFNET_MAX_TRAIN_BATCHES, len(dl_train)),
                                                     pct_start=ONE_CYCLE_PCT_START)
     print(5)
@@ -459,7 +423,10 @@ def train_effnet(ds_train, ds_eval, logger, name):
     save_model(name, model)
     return model
 
+<<<<<<< HEAD
 # logger = logging.getLogger("log.log")
+=======
+>>>>>>> c777c94c949b8aa07aed22f7eb07ec8f4cfb0882
 
 # N-fold models. Can be used to estimate accurate CV score and in ensembled submissions.
 effnet_models = []
