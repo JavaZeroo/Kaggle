@@ -71,16 +71,7 @@ else:
 
 
 
-# <div class="alert alert-block alert-success" style="font-size:25px">
-#     🦴 2. Loading train/eval/test dataframes 🦴
-# </div>
 
-
-# ### Train data
-# 
-# 1. Loading data from competition dataset folder `../input/rsna-2022-cervical-spine-fracture-detection/train.csv`
-# 2. Joining data with slice information from metadata dataset `../input/rsna-2022-spine-fracture-detection-metadata/meta_train_with_vertebrae.csv`
-# 3. Adding `Splits` column to facilitate train/eval splits.
 
 df_train = pd.read_csv(f'{RSNA_2022_PATH}/train.csv')
 print(len(df_train))
