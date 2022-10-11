@@ -11,3 +11,5 @@ wandb/
 testmodel.tph
 log/
 train_predictions.csv
+frozen_packages/
+train_volumes/
