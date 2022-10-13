@@ -38,7 +38,7 @@ EFFNET_CHECKPOINTS_PATH = '../input/rsna-2022-base-effnetv2'
 FRAC_LOSS_WEIGHT = 2.
 N_FOLDS = 5
 METADATA_PATH = '../input/vertebrae-detection-checkpoints'
-
+EPOCHS = 20
 PREDICT_MAX_BATCHES = 1e9
 
 # Common
@@ -373,53 +373,53 @@ def train_effnet(ds_train, ds_eval, logger, name):
 
     model = EffnetModel().to(DEVICE)
     optim = torch.optim.Adam(model.parameters())
-    scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=ONE_CYCLE_MAX_LR, epochs=5,
+    scheduler = torch.optim.lr_scheduler.OneCycleLR(optim, max_lr=ONE_CYCLE_MAX_LR, epochs=EPOCHS,
                                                     steps_per_epoch=min(EFFNET_MAX_TRAIN_BATCHES, len(dl_train)),
                                                     pct_start=ONE_CYCLE_PCT_START)
-    print(5)
 
     model.train()
     scaler = GradScaler()
-    print(6)
+    for epoch in range(EPOCHS):
+        if epoch % 10 == 0:
+            print("Training epoch: %d" % (epoch + 1))
+        with tqdm(dl_train, desc='Train', miniters=10) as progress:
+            for batch_idx, (X, y_frac, y_vert) in enumerate(progress):
 
-    with tqdm(dl_train, desc='Train', miniters=10) as progress:
-        for batch_idx, (X, y_frac, y_vert) in enumerate(progress):
+                if ds_eval is not None and batch_idx % SAVE_CHECKPOINT_EVERY_STEP == 0 and EFFNET_MAX_EVAL_BATCHES > 0:
+                    frac_loss, vert_loss = evaluate_effnet(
+                        model, ds_eval, max_batches=EFFNET_MAX_EVAL_BATCHES, shuffle=True)[:2]
+                    model.train()
+                    logger.log(
+                        {'eval_frac_loss': frac_loss, 'eval_vert_loss': vert_loss, 'eval_loss': frac_loss + vert_loss})
+                    if batch_idx > 0:  # don't save untrained model
+                        save_model(name, model)
 
-            if ds_eval is not None and batch_idx % SAVE_CHECKPOINT_EVERY_STEP == 0 and EFFNET_MAX_EVAL_BATCHES > 0:
-                frac_loss, vert_loss = evaluate_effnet(
-                    model, ds_eval, max_batches=EFFNET_MAX_EVAL_BATCHES, shuffle=True)[:2]
-                model.train()
-                logger.log(
-                    {'eval_frac_loss': frac_loss, 'eval_vert_loss': vert_loss, 'eval_loss': frac_loss + vert_loss})
-                if batch_idx > 0:  # don't save untrained model
-                    save_model(name, model)
+                if batch_idx >= EFFNET_MAX_TRAIN_BATCHES:
+                    break
 
-            if batch_idx >= EFFNET_MAX_TRAIN_BATCHES:
-                break
+                optim.zero_grad()
+                # Using mixed precision training
+                with autocast():
+                    y_frac_pred, y_vert_pred = model.forward(X.to(DEVICE))
+                    frac_loss = weighted_loss(y_frac_pred, y_frac.to(DEVICE))
+                    vert_loss = torch.nn.functional.binary_cross_entropy_with_logits(y_vert_pred, y_vert.to(DEVICE))
+                    loss = FRAC_LOSS_WEIGHT * frac_loss + vert_loss
 
-            optim.zero_grad()
-            # Using mixed precision training
-            with autocast():
-                y_frac_pred, y_vert_pred = model.forward(X.to(DEVICE))
-                frac_loss = weighted_loss(y_frac_pred, y_frac.to(DEVICE))
-                vert_loss = torch.nn.functional.binary_cross_entropy_with_logits(y_vert_pred, y_vert.to(DEVICE))
-                loss = FRAC_LOSS_WEIGHT * frac_loss + vert_loss
+                    if np.isinf(loss.item()) or np.isnan(loss.item()):
+                        print(f'Bad loss, skipping the batch {batch_idx}')
+                        del loss, frac_loss, vert_loss, y_frac_pred, y_vert_pred
+                        gc_collect()
+                        continue
 
-                if np.isinf(loss.item()) or np.isnan(loss.item()):
-                    print(f'Bad loss, skipping the batch {batch_idx}')
-                    del loss, frac_loss, vert_loss, y_frac_pred, y_vert_pred
-                    gc_collect()
-                    continue
+                # scaler is needed to prevent "gradient underflow"
+                scaler.scale(loss).backward()
+                scaler.step(optim)
+                scaler.update()
+                scheduler.step()
 
-            # scaler is needed to prevent "gradient underflow"
-            scaler.scale(loss).backward()
-            scaler.step(optim)
-            scaler.update()
-            scheduler.step()
-
-            progress.set_description(f'Train loss: {loss.item() :.02f}')
-            logger.log({'loss': (loss.item()), 'frac_loss': frac_loss.item(), 'vert_loss': vert_loss.item(),
-                        'lr': scheduler.get_last_lr()[0]})
+                progress.set_description(f'Train loss: {loss.item() :.02f}')
+                logger.log({'loss': (loss.item()), 'frac_loss': frac_loss.item(), 'vert_loss': vert_loss.item(),
+                            'lr': scheduler.get_last_lr()[0]})
     save_model(name, model)
     return model
 
@@ -482,7 +482,6 @@ def gen_effnet_predictions(effnet_models, df_train):
 
 df_pred = gen_effnet_predictions(effnet_models, df_train)
 df_pred.to_csv('train_predictions.csv', index=False)
-df_pred
 
 def plot_sample_patient(df_pred):
     patient = np.random.choice(df_pred.StudyInstanceUID)
